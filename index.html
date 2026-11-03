@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cefor-H • Gestion des Heures Supplémentaires et Récupérations</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cefor: {
+              50: '#fdf3f7',
+              100: '#fbe6ee',
+              200: '#f6cedf',
+              300: '#efa5c5',
+              400: '#e370a2',
+              500: '#d24480',
+              600: '#b82763',
+              700: '#9b1b4f',
+              800: '#6c1b43', /* Teinte Prune officielle du logo EAFC Namur Cefor */
+              900: '#521433',
+              950: '#35081e'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col antialiased">
+
+  <div id="authScreen" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden p-6 sm:p-8 space-y-6">
+      
+      <!-- Logo Cefor-H officiel -->
+      <div class="text-center space-y-2">
+        <div class="flex items-center justify-center">
+          <svg class="h-14 w-auto" viewBox="0 0 200 115" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M70 12 C25 12 12 35 12 58 C12 85 28 103 70 103" stroke="#6c1b43" stroke-width="16" stroke-linecap="round"/>
+            <text x="65" y="32" font-family="Inter, sans-serif" font-weight="700" font-size="18" fill="#6c1b43">EAFC</text>
+            <text x="65" y="52" font-family="Inter, sans-serif" font-weight="800" font-size="20" fill="#6c1b43">NAMUR</text>
+            <text x="65" y="98" font-family="Inter, sans-serif" font-weight="900" font-size="44" fill="#6c1b43">EFOR</text>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Cefor<span class="text-cefor-800">-H</span></h2>
+        <p class="text-xs text-slate-500 font-medium">Gestion du temps de travail & récupérations (Lundi - Vendredi)</p>
+      </div>
+
+      <!-- Raccourcis de test immédiat -->
+      <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1.5 text-xs">
+        <p class="font-semibold text-slate-600 flex items-center justify-between">
+          <span>Comptes Cefor :</span>
+          <span class="text-[10px] text-cefor-800 font-bold">1 clic pour remplir</span>
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="quickSecrBtn" class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 hover:border-cefor-800 hover:text-cefor-800 text-left transition truncate">
+            👩‍💼 Secrétaire (Marie)
+          </button>
+          <button type="button" id="quickAdminBtn" class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 hover:border-cefor-800 hover:text-cefor-800 text-left transition truncate">
+            🛡️ Direction (Catherine)
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulaire de Connexion -->
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Adresse email Cefor</label>
+          <div class="relative">
+            <i class="fa-regular fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+            <input type="email" id="loginEmail" required placeholder="nom@cefor.be" class="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cefor-800 transition">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Mot de passe</label>
+            <button type="button" id="openForgotModalBtn" class="text-xs text-cefor-800 hover:underline font-medium">Mot de passe oublié ?</button>
+          </div>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+            <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cefor-800 transition">
+            <button type="button" id="togglePasswordVisibility" class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 text-sm focus:outline-none">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="submitLoginBtn" class="w-full py-3 bg-cefor-800 hover:bg-cefor-900 text-white font-semibold rounded-xl text-sm shadow-md shadow-cefor-800/20 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>Se connecter</span>
+        </button>
+      </form>
+
+      <p class="text-[11px] text-center text-slate-400">
+        EAFC Namur Cefor • 1h prestée = 1h récupérable (sans majoration)
+      </p>
+    </div>
+  </div>
+
+  <div id="forgotPasswordModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i class="fa-solid fa-key text-cefor-800"></i> Mot de passe oublié
+        </h3>
+        <button type="button" class="close-forgot-modal text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Saisissez votre adresse email. Un lien vous sera envoyé pour réinitialiser vos accès Cefor.
+      </p>
+      <form id="forgotPasswordForm" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email Cefor</label>
+          <input type="email" id="resetEmailInput" required placeholder="nom@cefor.be" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cefor-800">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" class="close-forgot-modal px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Annuler</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-cefor-800 hover:bg-cefor-900 text-white text-xs font-semibold shadow-sm transition">Envoyer le lien</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        
+        <!-- Logo & Titre Cefor-H -->
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-cefor-800 text-white flex items-center justify-center font-black text-sm shadow-md shadow-cefor-800/20">
+            C-H
+          </div>
+          <div>
+            <span class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+              Cefor<span class="text-cefor-800">-H</span>
+              <span id="rolePill" class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-cefor-50 text-cefor-800 border border-cefor-200">
+                Secrétaire
+              </span>
+            </span>
+            <p class="text-xs text-slate-500 hidden sm:block">EAFC Namur Cefor • Semaine ouvrée Lundi au Vendredi</p>
+          </div>
+        </div>
+
+        <!-- Contrôles utilisateur et notifications -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <!-- Profil actif -->
+          <div class="flex items-center bg-slate-100 px-3 py-1.5 rounded-xl text-xs space-x-2 border border-slate-200">
+            <div id="userAvatarBadge" class="w-6 h-6 rounded-full bg-cefor-800 text-white flex items-center justify-center font-bold text-[10px]">
+              U
+            </div>
+            <div class="hidden sm:block text-left">
+              <p id="currentUserName" class="font-bold text-slate-800 leading-tight">Marie Dupont</p>
+              <p id="currentUserRoleLabel" class="text-[10px] text-slate-500 font-medium">Secrétaire</p>
+            </div>
+          </div>
+
+          <!-- Cloche notifications -->
+          <div class="relative">
+            <button id="notifBellBtn" class="p-2 text-slate-500 hover:text-cefor-800 hover:bg-slate-100 rounded-xl transition relative" title="Notifications">
+              <i class="fa-regular fa-bell text-lg"></i>
+              <span id="notifBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
+            </button>
+            
+            <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+              <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h4 class="font-semibold text-xs text-slate-700 uppercase tracking-wider">Notifications</h4>
+                <button id="clearNotifsBtn" class="text-xs text-cefor-800 hover:underline">Tout marquer comme lu</button>
+              </div>
+              <div id="notifList" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-sm">
+                <div class="p-4 text-center text-slate-400 text-xs">Aucune notification.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bouton Déconnexion -->
+          <button id="logoutBtn" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition text-sm font-medium flex items-center gap-1.5" title="Se déconnecter">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span class="hidden md:inline text-xs">Déconnexion</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    
+    <!-- Synthèse & Cartes KPI -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Solde disponible -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Solde Récupération</p>
+            <h3 id="statSolde" class="text-2xl font-bold text-slate-900 mt-1">0h00</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-cefor-50 text-cefor-800 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-hourglass-half"></i>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-slate-500 flex items-center gap-1">
+          <span class="text-emerald-600 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-circle-check"></i> Validées
+          </span>
+          <span>disponibles à poser</span>
+        </div>
+      </div>
+
+      <!-- Total Heures Sup Déclarées -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Heures Prestées</p>
+            <h3 id="statTotalOvertime" class="text-2xl font-bold text-slate-900 mt-1">0h00</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-stopwatch"></i>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-slate-500">1h prestée = 1h à récupérer</p>
+      </div>
+
+      <!-- Heures Déjà Récupérées -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Heures Récupérées</p>
+            <h3 id="statRecupConsommees" class="text-2xl font-bold text-amber-600 mt-1">0h00</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-umbrella-beach"></i>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-slate-500">Congés compensatoires pris</p>
+      </div>
+
+      <!-- Demandes en attente -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">En Attente</p>
+            <h3 id="statPending" class="text-2xl font-bold text-cefor-800 mt-1">0</h3>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-cefor-50 text-cefor-800 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-inbox"></i>
+          </div>
+        </div>
+        <p id="pendingSubtitle" class="mt-3 text-xs text-slate-500">Dossiers à valider</p>
+      </div>
+
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm">
+      
+      <!-- Sélecteur d'Onglets Principaux -->
+      <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl overflow-x-auto">
+        <button id="tabBtnDashboard" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-white text-cefor-800 shadow-sm whitespace-nowrap">
+          <i class="fa-regular fa-calendar-days mr-1.5"></i>Tableau de Bord Cefor
+        </button>
+        <button id="tabBtnTransactions" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          <i class="fa-solid fa-receipt mr-1.5"></i>Grand Livre
+        </button>
+        <button id="tabBtnUsers" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-cefor-800 hover:text-cefor-900 hidden whitespace-nowrap">
+          <i class="fa-solid fa-users-gear mr-1.5"></i>Collaborateurs
+        </button>
+      </div>
+
+      <!-- Boutons d'Action selon le rôle (Admin ou Secrétaire) -->
+      <div class="flex items-center gap-2">
+        <!-- Bouton Nouveau Collaborateur (Admin uniquement) -->
+        <button id="openNewUserModalBtn" class="hidden inline-flex items-center justify-center px-3.5 py-2 bg-cefor-800 hover:bg-cefor-900 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition">
+          <i class="fa-solid fa-user-plus mr-1.5"></i>Nouveau Collaborateur
+        </button>
+
+        <!-- Boutons Demandes (Secrétaires uniquement) -->
+        <button id="openNewOvertimeModalBtn" class="inline-flex items-center justify-center px-4 py-2 bg-cefor-800 hover:bg-cefor-900 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition">
+          <i class="fa-solid fa-plus mr-1.5"></i>Demande Heures Sup
+        </button>
+        <button id="openNewRecupModalBtn" class="inline-flex items-center justify-center px-4 py-2 bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition">
+          <i class="fa-solid fa-umbrella-beach mr-1.5"></i>Demande Récupération
+        </button>
+
+        <!-- Export CSV (Direction uniquement) -->
+        <button id="exportCsvBtn" class="hidden px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-xl font-medium transition" title="Exporter CSV">
+          <i class="fa-solid fa-file-csv text-base"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <div id="sectionDashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- COLONNE DE GAUCHE : Calendrier d'Équipe (Lun au Ven) -->
+      <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-4 sm:p-5 space-y-4">
+        
+        <!-- En-tête Calendrier avec navigation mois -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <i class="fa-regular fa-calendar-days text-cefor-800"></i> Calendrier d'Équipe (Lundi au Vendredi)
+            </h3>
+            <p class="text-xs text-slate-500">Heures supplémentaires prestées et récupérations prévues.</p>
+          </div>
+          
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div class="flex items-center space-x-1">
+              <button id="calPrevMonthBtn" class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition" title="Mois précédent">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              <span id="calCurrentMonthLabel" class="text-xs sm:text-sm font-bold text-slate-800 px-2 min-w-[125px] text-center capitalize">Mois Année</span>
+              <button id="calNextMonthBtn" class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition" title="Mois suivant">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+            <button id="calTodayBtn" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-semibold text-slate-700 transition">
+              Aujourd'hui
+            </button>
+          </div>
+        </div>
+
+        <!-- Légende compacte -->
+        <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-cefor-800 inline-block"></span>
+            <span>Heures Sup</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+            <span>Récupérations</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full border border-dashed border-slate-400 inline-block"></span>
+            <span class="text-slate-400 italic">Pointillés = En attente</span>
+          </div>
+        </div>
+
+        <!-- Grille Calendrier 5 jours ouvrés (Lun à Ven) -->
+        <div class="overflow-x-auto">
+          <div class="min-w-[480px]">
+            <div class="grid grid-cols-5 gap-1.5 text-center text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50 py-2 rounded-xl border border-slate-100 mb-1.5">
+              <div>Lun</div>
+              <div>Mar</div>
+              <div>Mer</div>
+              <div>Jeu</div>
+              <div>Ven</div>
+            </div>
+            <div id="calendarGrid" class="grid grid-cols-5 gap-1.5">
+              <!-- Rempli par JavaScript -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLONNE DE DROITE : Liste Unifiée des Demandes (Heures & Récup) -->
+      <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        
+        <!-- En-tête de la section Demandes -->
+        <div class="p-4 bg-slate-50/70 border-b border-slate-100 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-cefor-800"></i> Demandes en cours
+              </h3>
+              <span id="unifiedCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-cefor-100 text-cefor-800">0</span>
+            </div>
+            <span id="scopeDescriptionBadge" class="text-[11px] text-slate-500 font-medium">Vue personnelle</span>
+          </div>
+
+          <!-- Filtres compacts -->
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+              <input type="text" id="searchInput" placeholder="Filtrer motif, agent..." class="w-full pl-7 pr-2 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-cefor-800">
+            </div>
+            <div class="flex gap-1.5">
+              <select id="typeFilter" class="w-1/2 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-700 focus:ring-1 focus:ring-cefor-800">
+                <option value="all">Tous types</option>
+                <option value="overtime">Heures Sup</option>
+                <option value="recup">Récupérations</option>
+              </select>
+              <select id="statusFilter" class="w-1/2 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-700 focus:ring-1 focus:ring-cefor-800">
+                <option value="all">Tous statuts</option>
+                <option value="en_attente">⏳ Attente</option>
+                <option value="approuve">✅ Validé</option>
+                <option value="rejete">❌ Refusé</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste déroulante des demandes -->
+        <div id="unifiedRequestsContainer" class="p-3 divide-y divide-slate-100 max-h-[640px] overflow-y-auto space-y-2">
+          <!-- Injecté par JavaScript -->
+        </div>
+
+      </div>
+
+    </div>
+
+    <div id="sectionTransactions" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 bg-slate-50/50 border-b border-slate-100">
+        <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-emerald-600"></i> Grand livre des soldes de récupération
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">Historique des crédits (heures sup validées) et des débits (récupérations prises).</p>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-xs sm:text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
+            <tr>
+              <th class="px-4 py-3.5">Date transaction</th>
+              <th class="px-4 py-3.5">Collaborateur</th>
+              <th class="px-4 py-3.5">Type</th>
+              <th class="px-4 py-3.5">Description</th>
+              <th class="px-4 py-3.5 text-right">Variation</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTableBody" class="divide-y divide-slate-100 bg-white">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="sectionUsers" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+            <i class="fa-solid fa-users-gear text-cefor-800"></i> Collaborateurs & Accès Cefor-H
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">Gérez les comptes des secrétaires et de la direction.</p>
+        </div>
+        <button id="createUserHeaderBtn" class="px-3.5 py-2 bg-cefor-800 hover:bg-cefor-900 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5 self-start sm:self-auto">
+          <i class="fa-solid fa-plus"></i> Nouveau Collaborateur
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-xs sm:text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
+            <tr>
+              <th class="px-4 py-3.5">Collaborateur</th>
+              <th class="px-4 py-3.5">Adresse Email</th>
+              <th class="px-4 py-3.5">Rôle</th>
+              <th class="px-4 py-3.5">Solde Actuel</th>
+              <th class="px-4 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-slate-100 bg-white">
+            <!-- Dynamic users list -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="overtimeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-clock text-cefor-800"></i> Nouvelle Déclaration d'Heures Sup
+        </h3>
+        <button class="close-modal text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="overtimeForm" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Date d'exécution (Lundi au Vendredi)</label>
+          <input type="date" id="otDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+          <p class="text-[11px] text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Uniquement les jours ouvrés.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Heure de début</label>
+            <input type="time" id="otStartTime" value="08:00" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Heure de fin</label>
+            <input type="time" id="otEndTime" value="10:00" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+          </div>
+        </div>
+
+        <div class="p-3 bg-cefor-50 rounded-xl border border-cefor-200 flex items-center justify-between text-xs text-cefor-900">
+          <span>Durée calculée (crédit 1h = 1h) :</span>
+          <span id="otCalculatedCredit" class="font-bold text-sm text-cefor-800">2h00</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Motif / Mission Cefor</label>
+          <textarea id="otReason" required rows="3" placeholder="Ex: Permanence inscriptions, clôture des dossiers urgents..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" class="close-modal px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold">Annuler</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-cefor-800 hover:bg-cefor-900 text-white text-xs font-semibold shadow-md shadow-cefor-800/20 transition">Soumettre la déclaration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="recupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-umbrella-beach text-amber-500"></i> Demande de Récupération d'Heures
+        </h3>
+        <button class="close-modal text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="recupForm" class="p-6 space-y-4">
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between text-xs text-amber-900">
+          <span>Votre solde disponible actuel :</span>
+          <span id="recupCurrentSoldeDisplay" class="font-bold text-sm text-amber-700">0h00</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Date souhaitée (Lundi au Vendredi)</label>
+          <input type="date" id="recupDate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-700 uppercase">Créneau horaire à poser</label>
+            <div class="flex gap-1 text-[11px]">
+              <button type="button" id="quickMorningBtn" class="px-2 py-0.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-800 rounded text-slate-600 transition">Matin (08:30 - 12:30)</button>
+              <button type="button" id="quickAfternoonBtn" class="px-2 py-0.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-800 rounded text-slate-600 transition">Après-midi (13:30 - 17:00)</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <span class="text-[11px] text-slate-500 mb-1 block">Heure de début</span>
+              <input type="time" id="recupStartTime" value="13:30" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+            </div>
+            <div>
+              <span class="text-[11px] text-slate-500 mb-1 block">Heure de fin</span>
+              <input type="time" id="recupEndTime" value="17:00" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs text-slate-700">
+          <span>Heures à déduire calculées :</span>
+          <span id="recupCalculatedHours" class="font-bold text-sm text-amber-600">3h30</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Motif / Justificatif</label>
+          <textarea id="recupReason" required rows="3" placeholder="Ex: Absence vendredi après-midi, démarche personnelle..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" class="close-modal px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold">Annuler</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-md shadow-amber-200 transition">Transmettre à la direction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="reviewModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 id="reviewModalTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-stamp text-cefor-800"></i> Décision de la Direction
+        </h3>
+        <button class="close-modal text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div id="reviewModalDetails" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs space-y-2">
+          <!-- Injecté par JS -->
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Commentaire de la direction (optionnel)</label>
+          <textarea id="reviewCommentInput" rows="2" placeholder="Ex: Approuvé pour l'organisation du service..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-cefor-800"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" class="close-modal px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold">Annuler</button>
+          <button type="button" id="rejectRequestBtn" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-xmark mr-1"></i> Refuser
+          </button>
+          <button type="button" id="approveRequestBtn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-check mr-1"></i> Valider la demande
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="userModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h3 id="userModalTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-cefor-800"></i> Ajouter un Collaborateur Cefor
+        </h3>
+        <button class="close-modal text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="userForm" class="p-6 space-y-4">
+        <input type="hidden" id="userFormEditId" value="">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Prénom</label>
+            <input type="text" id="userFirstName" required placeholder="ex: Marie" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nom</label>
+            <input type="text" id="userLastName" required placeholder="ex: Dupont" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Adresse Email Cefor</label>
+          <input type="email" id="userEmailInput" required placeholder="prenom.nom@cefor.be" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Rôle Attribué</label>
+            <select id="userRoleSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-cefor-800 text-sm font-medium">
+              <option value="secretaire">👩‍💼 Secrétaire</option>
+              <option value="admin">🛡️ Direction (Admin)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mot de passe</label>
+            <input type="text" id="userPasswordInput" required placeholder="Mot de passe" value="pass123" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cefor-800 text-sm font-mono">
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" class="close-modal px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold">Annuler</button>
+          <button type="submit" id="userSubmitBtn" class="px-5 py-2.5 rounded-xl bg-cefor-800 hover:bg-cefor-900 text-white text-xs font-semibold shadow-md shadow-cefor-800/20 transition">Enregistrer le collaborateur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Répertoire Cefor avec comptes par défaut
+    let USERS_DIRECTORY = {
+      'secretaire@cefor.be': { 
+        id: 'user_secr_1', 
+        firstName: 'Marie',
+        lastName: 'Dupont',
+        name: 'Marie Dupont', 
+        email: 'secretaire@cefor.be', 
+        role: 'secretaire',
+        pass: 'azerty123'
+      },
+      'admin@cefor.be': { 
+        id: 'user_admin_1', 
+        firstName: 'Catherine',
+        lastName: 'Vasseur',
+        name: 'Catherine Vasseur', 
+        email: 'admin@cefor.be', 
+        role: 'admin',
+        pass: 'admin123'
+      }
+    };
+
+    let activeProfile = null;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'cefor-overtime-portal';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' 
+      ? JSON.parse(__firebase_config) 
+      : {
+          apiKey: "AIzaSyDemoFallbackKeyOnly",
+          authDomain: "demo-cefor.firebaseapp.com",
+          projectId: "demo-cefor-project",
+          storageBucket: "demo-cefor.appspot.com",
+          messagingSenderId: "123456789",
+          appId: "1:123456789:web:demo"
+        };
+
+    let app, auth, db;
+    let currentUser = null;
+    let isFirebaseReady = false;
+
+    let state = {
+      overtimes: [],
+      recuperations: [],
+      notifications: [],
+      transactions: []
+    };
+
+    let currentReviewItem = null;
+    let calendarDate = new Date(); // Date de référence pour le calendrier
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        warning: 'bg-amber-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+      
+      const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-circle-exclamation',
+        warning: 'fa-triangle-exclamation',
+        info: 'fa-circle-info'
+      };
+
+      toast.className = `pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold transition-all transform duration-300 opacity-0 translate-y-2 ${colors[type] || colors.info}`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-base"></i> <span>${message}</span>`;
+      
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('opacity-0', 'translate-y-2'));
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function formatHours(decimalHours) {
+      if (!decimalHours || isNaN(decimalHours)) return "0h00";
+      const sign = decimalHours < 0 ? "-" : "";
+      const absVal = Math.abs(decimalHours);
+      const hours = Math.floor(absVal);
+      const minutes = Math.round((absVal - hours) * 60);
+      return `${sign}${hours}h${minutes < 10 ? '0' : ''}${minutes}`;
+    }
+
+    function calculateTimeDuration(startTime, endTime) {
+      if (!startTime || !endTime) return 0;
+      const [sh, sm] = startTime.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      const diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+      return diffMinutes > 0 ? Math.round((diffMinutes / 60) * 100) / 100 : 0;
+    }
+
+    function isWeekendDay(dateStr) {
+      if (!dateStr) return false;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      return d.getDay() === 0 || d.getDay() === 6; // 0=Dim, 6=Sam
+    }
+
+    function getNextWorkday(date = new Date()) {
+      const d = new Date(date);
+      if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+      else if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+      return d.toISOString().split('T')[0];
+    }
+
+    function updateOvertimeCalculatedDuration() {
+      const s = document.getElementById('otStartTime')?.value;
+      const e = document.getElementById('otEndTime')?.value;
+      const dur = calculateTimeDuration(s, e);
+      const el = document.getElementById('otCalculatedCredit');
+      if (el) el.innerText = formatHours(dur);
+    }
+
+    function updateRecupCalculatedDuration() {
+      const s = document.getElementById('recupStartTime')?.value;
+      const e = document.getElementById('recupEndTime')?.value;
+      const dur = calculateTimeDuration(s, e);
+      const el = document.getElementById('recupCalculatedHours');
+      if (el) el.innerText = formatHours(dur);
+    }
+
+    function seedMockDataIfEmpty() {
+      state.overtimes = [
+        {
+          id: 'demo-ot-1',
+          userId: 'user_secr_1',
+          userName: 'Marie Dupont',
+          date: '2026-10-14',
+          startTime: '08:00',
+          endTime: '10:00',
+          hours: 2,
+          reason: 'Accueil des étudiants & inscriptions prioritaires',
+          status: 'approuve',
+          reviewComment: 'Validé par la direction Cefor.',
+          reviewedBy: 'Catherine Vasseur (Direction)',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'demo-ot-2',
+          userId: 'user_secr_1',
+          userName: 'Marie Dupont',
+          date: '2026-10-15',
+          startTime: '16:30',
+          endTime: '18:30',
+          hours: 2,
+          reason: 'Finalisation des dossiers d’inscriptions',
+          status: 'en_attente',
+          reviewComment: '',
+          reviewedBy: null,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      state.recuperations = [
+        {
+          id: 'demo-rec-1',
+          userId: 'user_secr_1',
+          userName: 'Marie Dupont',
+          date: '2026-10-16',
+          startTime: '13:30',
+          endTime: '16:30',
+          hours: 3,
+          reason: 'Absence autorisée vendredi après-midi',
+          status: 'en_attente',
+          reviewComment: '',
+          reviewedBy: null,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      if (activeProfile) updateAllUI();
+    }
+
+    async function seedInitialFirebaseData() {
+      seedMockDataIfEmpty();
+      if (!db || !currentUser) return;
+      try {
+        for (const ot of state.overtimes) {
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'demandes_heures_sup', ot.id), ot);
+        }
+        for (const rec of state.recuperations) {
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'demandes_recuperation', rec.id), rec);
+        }
+      } catch (e) {
+        console.warn("Info synchronisation initiale:", e);
+      }
+    }
+
+    async function initFirebase() {
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        currentUser = auth.currentUser;
+        isFirebaseReady = true;
+        setupRealtimeListeners();
+      } catch (err) {
+        console.warn("Mode autonome local Cefor-H actif:", err);
+        seedMockDataIfEmpty();
+      }
+    }
+
+    function setupRealtimeListeners() {
+      if (!db || !currentUser) return;
+
+      const overtimeColl = collection(db, 'artifacts', appId, 'public', 'data', 'demandes_heures_sup');
+      const recupColl = collection(db, 'artifacts', appId, 'public', 'data', 'demandes_recuperation');
+      const usersColl = collection(db, 'artifacts', appId, 'public', 'data', 'utilisateurs');
+
+      onSnapshot(usersColl, (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded = {};
+          snapshot.docs.forEach(d => {
+            const u = d.data();
+            loaded[u.email] = { id: d.id, ...u };
+          });
+          USERS_DIRECTORY = loaded;
+          if (activeProfile && USERS_DIRECTORY[activeProfile.email]) {
+            activeProfile = { ...USERS_DIRECTORY[activeProfile.email] };
+            applyUserSessionUI();
+          }
+        }
+        if (activeProfile) updateAllUI();
+      }, (e) => console.error(e));
+
+      onSnapshot(overtimeColl, (snapshot) => {
+        state.overtimes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (state.overtimes.length === 0) seedInitialFirebaseData();
+        else if (activeProfile) updateAllUI();
+      }, (e) => console.error(e));
+
+      onSnapshot(recupColl, (snapshot) => {
+        state.recuperations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (activeProfile) updateAllUI();
+      }, (e) => console.error(e));
+    }
+
+    function computeTransactionsAndBalances() {
+      const transactions = [];
+      const userBalances = {};
+
+      Object.values(USERS_DIRECTORY).forEach(u => {
+        userBalances[u.id] = { credited: 0, consumed: 0, balance: 0, totalDeclared: 0 };
+      });
+
+      state.overtimes.forEach(ot => {
+        if (!userBalances[ot.userId]) {
+          userBalances[ot.userId] = { credited: 0, consumed: 0, balance: 0, totalDeclared: 0 };
+        }
+        const hours = Number(ot.hours || 0);
+        userBalances[ot.userId].totalDeclared += hours;
+
+        if (ot.status === 'approuve') {
+          userBalances[ot.userId].credited += hours;
+          const slot = (ot.startTime && ot.endTime) ? ` (${ot.startTime} - ${ot.endTime})` : '';
+          transactions.push({
+            id: `tx-ot-${ot.id}`,
+            date: ot.date || ot.createdAt?.split('T')[0],
+            userId: ot.userId,
+            userName: ot.userName,
+            type: 'credit',
+            source: 'Heures sup prestées',
+            description: `${ot.reason}${slot}`,
+            delta: hours
+          });
+        }
+      });
+
+      state.recuperations.forEach(rec => {
+        if (!userBalances[rec.userId]) {
+          userBalances[rec.userId] = { credited: 0, consumed: 0, balance: 0, totalDeclared: 0 };
+        }
+
+        if (rec.status === 'approuve') {
+          const debit = Number(rec.hours || 0);
+          const slot = (rec.startTime && rec.endTime) ? ` (${rec.startTime} - ${rec.endTime})` : '';
+          userBalances[rec.userId].consumed += debit;
+          transactions.push({
+            id: `tx-rec-${rec.id}`,
+            date: rec.date || rec.createdAt?.split('T')[0],
+            userId: rec.userId,
+            userName: rec.userName,
+            type: 'debit',
+            source: 'Récupération posée',
+            description: `${rec.reason}${slot}`,
+            delta: -debit
+          });
+        }
+      });
+
+      Object.keys(userBalances).forEach(uid => {
+        userBalances[uid].balance = userBalances[uid].credited - userBalances[uid].consumed;
+      });
+
+      transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      state.transactions = transactions;
+      return userBalances;
+    }
+
+    function updateAllUI() {
+      if (!activeProfile) return;
+      const userBalances = computeTransactionsAndBalances();
+      const isAdmin = activeProfile.role === 'admin';
+
+      const scopeBadge = document.getElementById('scopeDescriptionBadge');
+      if (scopeBadge) {
+        scopeBadge.innerText = isAdmin ? "Vue Direction (Toute l'école)" : `Vue personnelle (${activeProfile.name})`;
+      }
+
+      const pendingSub = document.getElementById('pendingSubtitle');
+      if (pendingSub) {
+        pendingSub.innerText = isAdmin ? "Dossiers à valider" : "Vos demandes en attente";
+      }
+
+      let solde = 0, totalDeclared = 0, recupTaken = 0, pendingCount = 0;
+
+      if (isAdmin) {
+        Object.values(userBalances).forEach(b => {
+          solde += b.balance;
+          totalDeclared += b.totalDeclared;
+          recupTaken += b.consumed;
+        });
+        pendingCount = state.overtimes.filter(o => o.status === 'en_attente').length +
+                       state.recuperations.filter(r => r.status === 'en_attente').length;
+      } else {
+        const b = userBalances[activeProfile.id] || { balance: 0, totalDeclared: 0, consumed: 0 };
+        solde = b.balance;
+        totalDeclared = b.totalDeclared;
+        recupTaken = b.consumed;
+        pendingCount = state.overtimes.filter(o => o.userId === activeProfile.id && o.status === 'en_attente').length +
+                       state.recuperations.filter(r => r.userId === activeProfile.id && r.status === 'en_attente').length;
+      }
+
+      document.getElementById('statSolde').innerText = formatHours(solde);
+      document.getElementById('statTotalOvertime').innerText = formatHours(totalDeclared);
+      document.getElementById('statRecupConsommees').innerText = formatHours(recupTaken);
+      document.getElementById('statPending').innerText = pendingCount;
+
+      const myBal = (userBalances[activeProfile.id] || {}).balance || 0;
+      const myBalDisplay = document.getElementById('recupCurrentSoldeDisplay');
+      if (myBalDisplay) myBalDisplay.innerText = formatHours(myBal);
+
+      renderCalendarView();
+      renderUnifiedRequestsTable();
+      renderTransactionsTable();
+      if (isAdmin) renderUsersTable(userBalances);
+    }
+
+    function renderCalendarView() {
+      const calGrid = document.getElementById('calendarGrid');
+      if (!calGrid) return;
+
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      const monthName = calendarDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      document.getElementById('calCurrentMonthLabel').innerText = monthName;
+
+      calGrid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      // Calcul du décalage pour débuter le lundi (1=Lun ... 5=Ven)
+      let startDayOfWeek = firstDay.getDay(); // 0=Dim, 1=Lun ...
+      let offset = 0;
+      if (startDayOfWeek === 0) offset = 0;
+      else if (startDayOfWeek >= 1 && startDayOfWeek <= 5) offset = startDayOfWeek - 1;
+
+      for (let i = 0; i < offset; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = "bg-slate-50/50 rounded-xl min-h-[75px] p-1.5 border border-dashed border-slate-100 hidden sm:block";
+        calGrid.appendChild(emptyCell);
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const currentDate = new Date(year, month, day);
+        const dayOfWeek = currentDate.getDay();
+
+        // Jours ouvrés uniquement (ignorer samedi 6 et dimanche 0)
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+        const dayOts = state.overtimes.filter(o => o.date === dateStr);
+        const dayRecs = state.recuperations.filter(r => r.date === dateStr);
+
+        const cell = document.createElement('div');
+        cell.className = `rounded-xl min-h-[82px] p-2 border transition text-left flex flex-col justify-between ${
+          isToday ? 'bg-cefor-50/40 border-cefor-400 ring-1 ring-cefor-400' : 'bg-white border-slate-200 hover:border-slate-300'
+        }`;
+
+        let eventsHtml = '';
+        dayOts.forEach(ot => {
+          const isPending = ot.status === 'en_attente';
+          eventsHtml += `
+            <div class="mt-1 px-1.5 py-0.5 rounded text-[10px] leading-tight font-medium ${
+              isPending ? 'border border-dashed border-cefor-600 bg-cefor-50 text-cefor-900' : 'bg-cefor-800 text-white'
+            }" title="Heures Sup: ${ot.userName} • ${ot.startTime}-${ot.endTime} (${ot.reason})">
+              <span class="font-bold">🟣 ${ot.userName.split(' ')[0]}</span> (${formatHours(ot.hours)})
+            </div>
+          `;
+        });
+
+        dayRecs.forEach(rec => {
+          const isPending = rec.status === 'en_attente';
+          eventsHtml += `
+            <div class="mt-1 px-1.5 py-0.5 rounded text-[10px] leading-tight font-medium ${
+              isPending ? 'border border-dashed border-amber-500 bg-amber-50 text-amber-900' : 'bg-amber-600 text-white'
+            }" title="Récupération: ${rec.userName} • ${rec.startTime}-${rec.endTime} (${rec.reason})">
+              <span class="font-bold">🟠 ${rec.userName.split(' ')[0]}</span> (-${formatHours(rec.hours)})
+            </div>
+          `;
+        });
+
+        cell.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold ${isToday ? 'text-cefor-800' : 'text-slate-700'}">${day}</span>
+              ${isToday ? '<span class="text-[9px] font-bold text-cefor-800 uppercase">Auj.</span>' : ''}
+            </div>
+            <div class="space-y-0.5 overflow-hidden">${eventsHtml}</div>
+          </div>
+        `;
+        calGrid.appendChild(cell);
+      }
+    }
+
+    function renderUnifiedRequestsTable() {
+      const container = document.getElementById('unifiedRequestsContainer');
+      const badgeCount = document.getElementById('unifiedCountBadge');
+      if (!container) return;
+
+      const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      const statusF = document.getElementById('statusFilter')?.value || 'all';
+      const typeF = document.getElementById('typeFilter')?.value || 'all';
+      const isAdmin = activeProfile && activeProfile.role === 'admin';
+
+      // Combiner heures sup et récupérations en une seule liste
+      let unified = [
+        ...state.overtimes.map(o => ({ ...o, requestType: 'overtime' })),
+        ...state.recuperations.map(r => ({ ...r, requestType: 'recup' }))
+      ];
+
+      // Filtre par profil
+      if (!isAdmin) {
+        unified = unified.filter(item => item.userId === activeProfile.id);
+      }
+
+      // Filtre par type
+      if (typeF !== 'all') {
+        unified = unified.filter(item => item.requestType === typeF);
+      }
+
+      // Filtre par statut
+      if (statusF !== 'all') {
+        unified = unified.filter(item => item.status === statusF);
+      }
+
+      // Filtre par recherche
+      if (query) {
+        unified = unified.filter(item => 
+          item.userName.toLowerCase().includes(query) || 
+          item.reason.toLowerCase().includes(query)
+        );
+      }
+
+      // Tri antéchronologique
+      unified.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+      if (badgeCount) badgeCount.innerText = unified.length;
+
+      if (unified.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center text-slate-400 text-xs">
+            <i class="fa-regular fa-folder-open text-2xl mb-2 text-slate-300 block"></i>
+            Aucune demande trouvée pour ces critères.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = unified.map(item => {
+        const isOt = item.requestType === 'overtime';
+        const isPending = item.status === 'en_attente';
+        const isApproved = item.status === 'approuve';
+
+        const statusBadge = isApproved 
+          ? 'bg-emerald-100 text-emerald-800' 
+          : (isPending ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800');
+        const statusLabel = isApproved ? 'Validé' : (isPending ? 'En attente' : 'Refusé');
+
+        const typeBadge = isOt
+          ? 'bg-cefor-50 text-cefor-800 border-cefor-200'
+          : 'bg-amber-50 text-amber-800 border-amber-200';
+        const typeText = isOt ? '🟣 Heures Sup' : '🟠 Récupération';
+
+        return `
+          <div class="p-3 bg-white rounded-xl border border-slate-200/80 hover:border-slate-300 transition space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${typeBadge}">${typeText}</span>
+                  <span class="font-bold text-slate-800 text-xs">${item.userName}</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                  <i class="fa-regular fa-calendar mr-1"></i>${item.date} 
+                  ${item.startTime ? `(${item.startTime} - ${item.endTime})` : ''}
+                </p>
+              </div>
+
+              <div class="text-right">
+                <span class="font-black text-xs ${isOt ? 'text-cefor-800' : 'text-amber-600'}">
+                  ${isOt ? '+' : '-'}${formatHours(item.hours)}
+                </span>
+                <span class="block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusBadge}">
+                  ${statusLabel}
+                </span>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 leading-snug">
+              ${item.reason}
+            </p>
+
+            ${item.reviewComment ? `
+              <p class="text-[11px] text-slate-500 italic pl-1 border-l-2 border-slate-300">
+                Direction : « ${item.reviewComment} »
+              </p>
+            ` : ''}
+
+            ${isAdmin && isPending ? `
+              <div class="pt-1 flex justify-end">
+                <button onclick="window.openReviewModal('${item.requestType}', '${item.id}')" class="px-3 py-1.5 bg-cefor-800 hover:bg-cefor-900 text-white rounded-lg text-xs font-semibold shadow-xs transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-stamp"></i> Décider
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTransactionsTable() {
+      const tbody = document.getElementById('transactionsTableBody');
+      if (!tbody) return;
+
+      const isAdmin = activeProfile && activeProfile.role === 'admin';
+      let items = state.transactions.filter(t => isAdmin || t.userId === activeProfile.id);
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400 text-xs">Aucun mouvement de solde validé pour l'instant.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(t => {
+        const isCredit = t.type === 'credit';
+        return `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="px-4 py-3 whitespace-nowrap text-slate-500 font-mono text-xs">${t.date}</td>
+            <td class="px-4 py-3 whitespace-nowrap font-medium text-slate-800">${t.userName}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${isCredit ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${isCredit ? 'Crédit (Presté)' : 'Débit (Récupéré)'}
+              </span>
+            </td>
+            <td class="px-4 py-3 max-w-sm truncate text-slate-600">${t.description}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-right font-bold font-mono ${isCredit ? 'text-emerald-600' : 'text-amber-600'}">
+              ${isCredit ? '+' : ''}${formatHours(t.delta)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderUsersTable(userBalances) {
+      const tbody = document.getElementById('usersTableBody');
+      if (!tbody) return;
+
+      const usersList = Object.values(USERS_DIRECTORY);
+      tbody.innerHTML = usersList.map(u => {
+        const isCurrentAuth = activeProfile && activeProfile.id === u.id;
+        const b = (userBalances && userBalances[u.id]) ? userBalances[u.id].balance : 0;
+        const isAdminRole = u.role === 'admin';
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full ${isAdminRole ? 'bg-cefor-100 text-cefor-800' : 'bg-slate-200 text-slate-700'} flex items-center justify-center font-bold text-xs">
+                  ${(u.name || 'U').split(' ').map(n=>n[0]).join('')}
+                </div>
+                <div>
+                  <div class="font-semibold text-slate-900 flex items-center gap-1.5">
+                    ${u.name}
+                    ${isCurrentAuth ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded">Actif</span>' : ''}
+                  </div>
+                  <div class="text-[11px] text-slate-400 font-mono">Mot de passe: ${u.pass}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap text-slate-600 font-mono text-xs">${u.email}</td>
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${isAdminRole ? 'bg-cefor-50 text-cefor-800 border border-cefor-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
+                ${isAdminRole ? '🛡️ Direction' : '👩‍💼 Secrétaire'}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap font-mono font-bold ${b < 0 ? 'text-rose-600' : 'text-slate-800'}">
+              ${formatHours(b)}
+            </td>
+            <td class="px-4 py-3.5 whitespace-nowrap text-right space-x-1">
+              <button onclick="window.openEditUserModal('${u.id}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+                <i class="fa-regular fa-pen-to-square mr-1"></i>Modifier
+              </button>
+              ${!isCurrentAuth ? `
+                <button onclick="window.deleteUser('${u.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition" title="Supprimer">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function applyUserSessionUI() {
+      if (!activeProfile) return;
+      const isAdmin = activeProfile.role === 'admin';
+
+      document.getElementById('currentUserName').innerText = activeProfile.name;
+      document.getElementById('currentUserRoleLabel').innerText = isAdmin ? 'Direction (Admin)' : 'Secrétaire';
+      document.getElementById('userAvatarBadge').innerText = activeProfile.name.split(' ').map(n=>n[0]).join('');
+
+      const rolePill = document.getElementById('rolePill');
+      rolePill.innerText = isAdmin ? '🛡️ Direction' : '👩‍💼 Secrétaire';
+      rolePill.className = isAdmin 
+        ? 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-cefor-50 text-cefor-800 border border-cefor-200'
+        : 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-700 border border-slate-200';
+
+      const exportBtn = document.getElementById('exportCsvBtn');
+      const tabBtnUsers = document.getElementById('tabBtnUsers');
+      const openNewUserModalBtn = document.getElementById('openNewUserModalBtn');
+      const openNewOvertimeModalBtn = document.getElementById('openNewOvertimeModalBtn');
+      const openNewRecupModalBtn = document.getElementById('openNewRecupModalBtn');
+
+      if (isAdmin) {
+        // L'admin gère l'équipe : pas de demande d'heures sup ou récup pour lui-même
+        if (openNewOvertimeModalBtn) openNewOvertimeModalBtn.classList.add('hidden');
+        if (openNewRecupModalBtn) openNewRecupModalBtn.classList.add('hidden');
+        if (exportBtn) exportBtn.classList.remove('hidden');
+        if (tabBtnUsers) tabBtnUsers.classList.remove('hidden');
+        if (openNewUserModalBtn) openNewUserModalBtn.classList.remove('hidden');
+      } else {
+        // La secrétaire demande des heures sup et des récupérations
+        if (openNewOvertimeModalBtn) openNewOvertimeModalBtn.classList.remove('hidden');
+        if (openNewRecupModalBtn) openNewRecupModalBtn.classList.remove('hidden');
+        if (exportBtn) exportBtn.classList.add('hidden');
+        if (tabBtnUsers) tabBtnUsers.classList.add('hidden');
+        if (openNewUserModalBtn) openNewUserModalBtn.classList.add('hidden');
+        
+        // Retour sur le tableau de bord si l'onglet users était actif
+        const userSection = document.getElementById('sectionUsers');
+        if (userSection && !userSection.classList.contains('hidden')) {
+          document.getElementById('tabBtnDashboard')?.click();
+        }
+      }
+    }
+
+    window.openReviewModal = function(type, id) {
+      if (!activeProfile || activeProfile.role !== 'admin') return;
+
+      const item = type === 'overtime' 
+        ? state.overtimes.find(o => o.id === id)
+        : state.recuperations.find(r => r.id === id);
+
+      if (!item) return;
+      currentReviewItem = { ...item, itemType: type };
+
+      const isOt = type === 'overtime';
+      document.getElementById('reviewModalTitle').innerHTML = `
+        <i class="fa-solid fa-stamp text-cefor-800"></i> ${isOt ? 'Valider les Heures Supplémentaires' : 'Valider la Récupération'}
+      `;
+
+      document.getElementById('reviewModalDetails').innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="font-bold text-slate-800 text-sm">${item.userName}</p>
+            <p class="text-slate-500">${item.date} • ${item.startTime || ''} à ${item.endTime || ''}</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${isOt ? 'bg-cefor-100 text-cefor-800' : 'bg-amber-100 text-amber-800'}">
+            ${isOt ? '+' : '-'}${formatHours(item.hours)}
+          </span>
+        </div>
+        <p class="text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200 mt-2">
+          <strong>Motif :</strong> ${item.reason}
+        </p>
+      `;
+
+      document.getElementById('reviewCommentInput').value = '';
+      document.getElementById('reviewModal').classList.remove('hidden');
+    };
+
+    document.getElementById('approveRequestBtn')?.addEventListener('click', async () => {
+      if (!currentReviewItem) return;
+      const comment = document.getElementById('reviewCommentInput')?.value.trim() || 'Validé par la direction Cefor.';
+      await applyReviewDecision(currentReviewItem.itemType, currentReviewItem.id, 'approuve', comment);
+      closeAllModals();
+    });
+
+    document.getElementById('rejectRequestBtn')?.addEventListener('click', async () => {
+      if (!currentReviewItem) return;
+      const comment = document.getElementById('reviewCommentInput')?.value.trim() || 'Demande refusée par la direction.';
+      await applyReviewDecision(currentReviewItem.itemType, currentReviewItem.id, 'rejete', comment);
+      closeAllModals();
+    });
+
+    async function applyReviewDecision(type, id, newStatus, comment) {
+      const collectionName = type === 'overtime' ? 'demandes_heures_sup' : 'demandes_recuperation';
+      const targetList = type === 'overtime' ? state.overtimes : state.recuperations;
+      const index = targetList.findIndex(x => x.id === id);
+
+      if (index !== -1) {
+        targetList[index].status = newStatus;
+        targetList[index].reviewComment = comment;
+        targetList[index].reviewedBy = `${activeProfile.name} (Direction Cefor)`;
+      }
+
+      if (db && isFirebaseReady) {
+        try {
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', collectionName, id);
+          await updateDoc(docRef, {
+            status: newStatus,
+            reviewComment: comment,
+            reviewedBy: `${activeProfile.name} (Direction Cefor)`
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      showToast(`Demande ${newStatus === 'approuve' ? 'validée avec succès' : 'refusée'}.`, newStatus === 'approuve' ? 'success' : 'warning');
+      updateAllUI();
+    }
+
+    document.getElementById('overtimeForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!activeProfile) return;
+
+      const dateVal = document.getElementById('otDate').value;
+      if (isWeekendDay(dateVal)) {
+        showToast("Impossible de prester des heures le week-end ! Uniquement du lundi au vendredi.", "error");
+        return;
+      }
+
+      const startTime = document.getElementById('otStartTime').value;
+      const endTime = document.getElementById('otEndTime').value;
+      const duration = calculateTimeDuration(startTime, endTime);
+
+      if (duration <= 0) {
+        showToast("L'heure de fin doit être postérieure à l'heure de début.", "warning");
+        return;
+      }
+
+      const reason = document.getElementById('otReason').value.trim();
+      const newEntry = {
+        id: 'ot_' + Date.now(),
+        userId: activeProfile.id,
+        userName: activeProfile.name,
+        date: dateVal,
+        startTime,
+        endTime,
+        hours: duration,
+        reason,
+        status: 'en_attente',
+        reviewComment: '',
+        reviewedBy: null,
+        createdAt: new Date().toISOString()
+      };
+
+      if (db && isFirebaseReady) {
+        try {
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'demandes_heures_sup', newEntry.id), newEntry);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        state.overtimes.unshift(newEntry);
+      }
+
+      showToast("Déclaration d'heures supplémentaires transmise à la direction !", "success");
+      closeAllModals();
+      updateAllUI();
+    });
+
+    document.getElementById('recupForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!activeProfile) return;
+
+      const dateVal = document.getElementById('recupDate').value;
+      if (isWeekendDay(dateVal)) {
+        showToast("La récupération ne s'applique que du lundi au vendredi !", "error");
+        return;
+      }
+
+      const startTime = document.getElementById('recupStartTime').value;
+      const endTime = document.getElementById('recupEndTime').value;
+      const duration = calculateTimeDuration(startTime, endTime);
+
+      if (duration <= 0) {
+        showToast("L'heure de fin doit être postérieure à l'heure de début.", "warning");
+        return;
+      }
+
+      const userBalances = computeTransactionsAndBalances();
+      const currentBalance = (userBalances[activeProfile.id] || {}).balance || 0;
+
+      if (duration > currentBalance) {
+        showToast(`Solde insuffisant (${formatHours(currentBalance)} disponible pour ${formatHours(duration)} demandé).`, "error");
+        return;
+      }
+
+      const reason = document.getElementById('recupReason').value.trim();
+      const newEntry = {
+        id: 'rec_' + Date.now(),
+        userId: activeProfile.id,
+        userName: activeProfile.name,
+        date: dateVal,
+        startTime,
+        endTime,
+        hours: duration,
+        reason,
+        status: 'en_attente',
+        reviewComment: '',
+        reviewedBy: null,
+        createdAt: new Date().toISOString()
+      };
+
+      if (db && isFirebaseReady) {
+        try {
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'demandes_recuperation', newEntry.id), newEntry);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        state.recuperations.unshift(newEntry);
+      }
+
+      showToast("Demande de récupération envoyée à la direction !", "success");
+      closeAllModals();
+      updateAllUI();
+    });
+
+    window.openNewUserModal = function() {
+      if (!activeProfile || activeProfile.role !== 'admin') return;
+      document.getElementById('userModalTitle').innerHTML = '<i class="fa-solid fa-user-plus text-cefor-800"></i> Ajouter un Collaborateur Cefor';
+      document.getElementById('userSubmitBtn').innerText = 'Créer le collaborateur';
+      document.getElementById('userFormEditId').value = '';
+      document.getElementById('userFirstName').value = '';
+      document.getElementById('userLastName').value = '';
+      document.getElementById('userEmailInput').value = '';
+      document.getElementById('userRoleSelect').value = 'secretaire';
+      document.getElementById('userPasswordInput').value = 'pass' + Math.floor(100 + Math.random() * 900);
+      document.getElementById('userModal').classList.remove('hidden');
+    };
+
+    window.openEditUserModal = function(userId) {
+      if (!activeProfile || activeProfile.role !== 'admin') return;
+      const targetUser = Object.values(USERS_DIRECTORY).find(u => u.id === userId);
+      if (!targetUser) return;
+
+      document.getElementById('userModalTitle').innerHTML = '<i class="fa-solid fa-user-pen text-cefor-800"></i> Modifier le Collaborateur';
+      document.getElementById('userSubmitBtn').innerText = 'Enregistrer les modifications';
+      document.getElementById('userFormEditId').value = targetUser.id;
+      document.getElementById('userFirstName').value = targetUser.firstName || targetUser.name.split(' ')[0] || '';
+      document.getElementById('userLastName').value = targetUser.lastName || targetUser.name.split(' ').slice(1).join(' ') || '';
+      document.getElementById('userEmailInput').value = targetUser.email;
+      document.getElementById('userRoleSelect').value = targetUser.role;
+      document.getElementById('userPasswordInput').value = targetUser.pass || 'pass123';
+      document.getElementById('userModal').classList.remove('hidden');
+    };
+
+    window.deleteUser = async function(userId) {
+      if (!activeProfile || activeProfile.role !== 'admin') return;
+      if (activeProfile.id === userId) {
+        showToast("Vous ne pouvez pas supprimer votre propre compte actif !", "warning");
+        return;
+      }
+      const target = Object.values(USERS_DIRECTORY).find(u => u.id === userId);
+      if (!target) return;
+
+      const emailKey = Object.keys(USERS_DIRECTORY).find(k => USERS_DIRECTORY[k].id === userId);
+      if (emailKey) delete USERS_DIRECTORY[emailKey];
+
+      if (db && isFirebaseReady) {
+        try {
+          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'utilisateurs', userId));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      showToast(`Compte de ${target.name} supprimé.`, "info");
+      updateAllUI();
+    };
+
+    document.getElementById('userForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!activeProfile || activeProfile.role !== 'admin') return;
+
+      const editId = document.getElementById('userFormEditId').value;
+      const firstName = document.getElementById('userFirstName').value.trim();
+      const lastName = document.getElementById('userLastName').value.trim();
+      const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
+      const role = document.getElementById('userRoleSelect').value;
+      const pass = document.getElementById('userPasswordInput').value.trim();
+
+      const fullName = `${firstName} ${lastName}`;
+      const userId = editId || ('user_' + Date.now());
+
+      const userObj = { id: userId, firstName, lastName, name: fullName, email, role, pass };
+
+      if (db && isFirebaseReady) {
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'utilisateurs', userId), userObj);
+      } else {
+        USERS_DIRECTORY[email] = userObj;
+      }
+
+      showToast(`Collaborateur ${fullName} enregistré !`, "success");
+      closeAllModals();
+      updateAllUI();
+    });
+
+    document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('loginPassword').value;
+
+      const user = USERS_DIRECTORY[email];
+      if (!user) {
+        showToast("Adresse email non répertoriée à l'EAFC Cefor.", "error");
+        return;
+      }
+      if (user.pass !== pass) {
+        showToast("Mot de passe incorrect.", "error");
+        return;
+      }
+
+      activeProfile = { ...user };
+      document.getElementById('authScreen').classList.add('hidden');
+      applyUserSessionUI();
+      updateAllUI();
+      showToast(`Bienvenue ${activeProfile.name} sur Cefor-H !`, "success");
+    });
+
+    document.getElementById('quickSecrBtn')?.addEventListener('click', () => {
+      document.getElementById('loginEmail').value = 'secretaire@cefor.be';
+      document.getElementById('loginPassword').value = 'azerty123';
+    });
+
+    document.getElementById('quickAdminBtn')?.addEventListener('click', () => {
+      document.getElementById('loginEmail').value = 'admin@cefor.be';
+      document.getElementById('loginPassword').value = 'admin123';
+    });
+
+    document.getElementById('togglePasswordVisibility')?.addEventListener('click', () => {
+      const p = document.getElementById('loginPassword');
+      const isPwd = p.getAttribute('type') === 'password';
+      p.setAttribute('type', isPwd ? 'text' : 'password');
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      activeProfile = null;
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('authScreen').classList.remove('hidden');
+      showToast("Vous êtes déconnecté.", "info");
+    });
+
+    document.getElementById('openForgotModalBtn')?.addEventListener('click', () => {
+      document.getElementById('resetEmailInput').value = document.getElementById('loginEmail').value;
+      document.getElementById('forgotPasswordModal').classList.remove('hidden');
+    });
+
+    document.querySelectorAll('.close-forgot-modal').forEach(b => {
+      b.addEventListener('click', () => document.getElementById('forgotPasswordModal').classList.add('hidden'));
+    });
+
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('forgotPasswordModal').classList.add('hidden');
+      showToast("Lien de réinitialisation transmis à votre adresse Cefor.", "success");
+    });
+
+    const mainTabs = [
+      { btn: document.getElementById('tabBtnDashboard'), sec: document.getElementById('sectionDashboard') },
+      { btn: document.getElementById('tabBtnTransactions'), sec: document.getElementById('sectionTransactions') },
+      { btn: document.getElementById('tabBtnUsers'), sec: document.getElementById('sectionUsers') }
+    ];
+
+    mainTabs.forEach(({ btn, sec }) => {
+      if (!btn || !sec) return;
+      btn.addEventListener('click', () => {
+        mainTabs.forEach(t => {
+          if (t.btn) {
+            t.btn.classList.remove('bg-white', 'text-cefor-800', 'shadow-sm', 'font-semibold');
+            t.btn.classList.add('text-slate-600', 'font-medium');
+          }
+          if (t.sec) t.sec.classList.add('hidden');
+        });
+        btn.classList.add('bg-white', 'text-cefor-800', 'shadow-sm', 'font-semibold');
+        btn.classList.remove('text-slate-600', 'font-medium');
+        sec.classList.remove('hidden');
+
+        if (sec.id === 'sectionDashboard') {
+          renderCalendarView();
+          renderUnifiedRequestsTable();
+        } else if (sec.id === 'sectionTransactions') {
+          renderTransactionsTable();
+        } else if (sec.id === 'sectionUsers') {
+          renderUsersTable(computeTransactionsAndBalances());
+        }
+      });
+    });
+
+    document.getElementById('openNewOvertimeModalBtn')?.addEventListener('click', () => {
+      document.getElementById('otDate').value = getNextWorkday(new Date());
+      updateOvertimeCalculatedDuration();
+      document.getElementById('overtimeModal').classList.remove('hidden');
+    });
+
+    document.getElementById('openNewRecupModalBtn')?.addEventListener('click', () => {
+      const tomorrow = new Date(Date.now() + 86400000);
+      document.getElementById('recupDate').value = getNextWorkday(tomorrow);
+      updateRecupCalculatedDuration();
+      document.getElementById('recupModal').classList.remove('hidden');
+    });
+
+    document.getElementById('openNewUserModalBtn')?.addEventListener('click', window.openNewUserModal);
+    document.getElementById('createUserHeaderBtn')?.addEventListener('click', window.openNewUserModal);
+
+    function closeAllModals() {
+      document.querySelectorAll('#overtimeModal, #recupModal, #reviewModal, #forgotPasswordModal, #userModal').forEach(el => el.classList.add('hidden'));
+    }
+    document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', closeAllModals));
+
+    // Raccourcis de créneaux récupération
+    document.getElementById('quickMorningBtn')?.addEventListener('click', () => {
+      document.getElementById('recupStartTime').value = '08:30';
+      document.getElementById('recupEndTime').value = '12:30';
+      updateRecupCalculatedDuration();
+    });
+
+    document.getElementById('quickAfternoonBtn')?.addEventListener('click', () => {
+      document.getElementById('recupStartTime').value = '13:30';
+      document.getElementById('recupEndTime').value = '17:00';
+      updateRecupCalculatedDuration();
+    });
+
+    // Écouteurs de calcul automatique de durée
+    document.getElementById('otStartTime')?.addEventListener('input', updateOvertimeCalculatedDuration);
+    document.getElementById('otEndTime')?.addEventListener('input', updateOvertimeCalculatedDuration);
+    document.getElementById('recupStartTime')?.addEventListener('input', updateRecupCalculatedDuration);
+    document.getElementById('recupEndTime')?.addEventListener('input', updateRecupCalculatedDuration);
+
+    // Navigation du calendrier
+    document.getElementById('calPrevMonthBtn')?.addEventListener('click', () => {
+      calendarDate.setMonth(calendarDate.getMonth() - 1);
+      renderCalendarView();
+    });
+
+    document.getElementById('calNextMonthBtn')?.addEventListener('click', () => {
+      calendarDate.setMonth(calendarDate.getMonth() + 1);
+      renderCalendarView();
+    });
+
+    document.getElementById('calTodayBtn')?.addEventListener('click', () => {
+      calendarDate = new Date();
+      renderCalendarView();
+    });
+
+    // Filtres des demandes
+    document.getElementById('searchInput')?.addEventListener('input', renderUnifiedRequestsTable);
+    document.getElementById('statusFilter')?.addEventListener('change', renderUnifiedRequestsTable);
+    document.getElementById('typeFilter')?.addEventListener('change', renderUnifiedRequestsTable);
+
+    // Export CSV
+    document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+      if (!activeProfile || activeProfile.role !== 'admin') return;
+      let csv = "data:text/csv;charset=utf-8,Type,Agent,Date,Heure_Debut,Heure_Fin,Duree,Motif,Statut,Validateur\r\n";
+      
+      state.overtimes.forEach(o => {
+        csv += `"Heures Sup","${o.userName}","${o.date}","${o.startTime||''}","${o.endTime||''}","${o.hours}","${(o.reason||'').replace(/"/g, '""')}","${o.status}","${o.reviewedBy||''}"\r\n`;
+      });
+      state.recuperations.forEach(r => {
+        csv += `"Recuperation","${r.userName}","${r.date}","${r.startTime||''}","${r.endTime||''}","-${r.hours}","${(r.reason||'').replace(/"/g, '""')}","${r.status}","${r.reviewedBy||''}"\r\n`;
+      });
+
+      const uri = encodeURI(csv);
+      const a = document.createElement("a");
+      a.href = uri;
+      a.download = `cefor_heures_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast("Fichier CSV Cefor exporté avec succès.", "success");
+    });
+
+    // Notifications
+    document.getElementById('notifBellBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('notifDropdown')?.classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => document.getElementById('notifDropdown')?.classList.add('hidden'));
+    document.getElementById('notifDropdown')?.addEventListener('click', (e) => e.stopPropagation());
+
+    document.getElementById('clearNotifsBtn')?.addEventListener('click', () => {
+      state.notifications.forEach(n => n.read = true);
+      const badge = document.getElementById('notifBadge');
+      if (badge) badge.classList.add('hidden');
+      showToast("Toutes les notifications sont lues.", "info");
+    });
+
+    window.onload = function() {
+      initFirebase();
+      updateOvertimeCalculatedDuration();
+      updateRecupCalculatedDuration();
+    };
+  </script>
+</body>
+</html>
