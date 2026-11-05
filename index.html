@@ -2675,10 +2675,10 @@
       $('adjustModal').classList.remove('hidden');
     };
 
-    ['adjustHours', 'adjustMinutes'].forEach(id => $(id).addEventListener('input', updateAdjustDelta));
-    $('adjustNegative').addEventListener('change', updateAdjustDelta);
+    ['adjustHours', 'adjustMinutes'].forEach(id => $(id)?.addEventListener('input', updateAdjustDelta));
+    $('adjustNegative')?.addEventListener('change', updateAdjustDelta);
 
-    $('adjustForm').addEventListener('submit', async (e) => {
+    $('adjustForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!activeProfile || activeProfile.role !== 'admin') return;
       const uid = $('adjustUserId').value;
