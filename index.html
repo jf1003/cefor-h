@@ -606,9 +606,15 @@
 
         <div class="space-y-2">
           <div class="flex items-center justify-between">
-            <label id="reqSlotLabel" class="block text-xs font-semibold text-slate-700 uppercase">Créneau
-              horaire</label>
-
+            <label id="reqSlotLabel" class="block text-xs font-semibold text-slate-700 uppercase">Créneau horaire</label>
+            <div id="reqQuickBtns" class="hidden flex gap-1 text-[11px]">
+              <button type="button" id="quickMorningBtn"
+                class="px-2 py-0.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 rounded text-slate-600 transition">Matin
+                (08:30 - 12:30)</button>
+              <button type="button" id="quickAfternoonBtn"
+                class="px-2 py-0.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 rounded text-slate-600 transition">Après-midi
+                (13:30 - 17:00)</button>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -626,7 +632,7 @@
 
         <div id="reqCalcBox"
           class="p-3 rounded-xl border flex items-center justify-between text-xs bg-orange-50 border-orange-200 text-orange-900">
-
+          <span id="reqCalcLabel">Heures prestées (crédit 1h = 1h) :</span>
           <span id="reqCalculated" class="font-bold text-sm text-orange-600">2h00</span>
         </div>
 
@@ -766,8 +772,7 @@
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- MODAL: Horaire classique -->
-  <div id="planningModal"
-    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+  <div id="planningModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
       <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
         <h3 id="planningTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -780,20 +785,16 @@
         <div id="planningRows" class="space-y-2"></div>
         <p class="text-[11px] text-slate-500">Laissez vide un jour non travaillé.</p>
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button"
-            class="close-modal px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Fermer</button>
-          <button type="submit" id="planningSaveBtn"
-            class="px-4 py-2 text-sm font-semibold text-white bg-cefor-800 hover:bg-cefor-900 rounded-xl">Enregistrer</button>
+          <button type="button" class="close-modal px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Fermer</button>
+          <button type="submit" id="planningSaveBtn" class="px-4 py-2 text-sm font-semibold text-white bg-cefor-800 hover:bg-cefor-900 rounded-xl">Enregistrer</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- MODAL: Ajuster le solde (Direction) -->
-  <div id="adjustModal"
-    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div
-      class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+  <div id="adjustModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] overflow-y-auto">
       <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
         <h3 id="adjustTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-scale-balanced text-cefor-800"></i> Ajuster le solde
@@ -807,34 +808,24 @@
           <span id="adjustCurrent" class="font-bold text-sm text-cefor-800">0h00</span>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nouveau solde (heures :
-            minutes)</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nouveau solde (heures : minutes)</label>
           <div class="flex items-center gap-2">
-            <input type="number" id="adjustHours" min="0" step="1" required placeholder="h"
-              class="w-24 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-cefor-800">
+            <input type="number" id="adjustHours" min="0" step="1" required placeholder="h" class="w-24 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-cefor-800">
             <span class="text-slate-500 font-bold">h</span>
-            <input type="number" id="adjustMinutes" min="0" max="59" step="1" value="0" required
-              class="w-24 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-cefor-800">
+            <input type="number" id="adjustMinutes" min="0" max="59" step="1" value="0" required class="w-24 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-cefor-800">
             <span class="text-slate-500 font-bold">min</span>
-            <label class="ml-auto flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox"
-                id="adjustNegative"> négatif</label>
+            <label class="ml-auto flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" id="adjustNegative"> négatif</label>
           </div>
         </div>
-        <div id="adjustDeltaBox"
-          class="p-3 rounded-xl border bg-slate-50 border-slate-200 flex items-center justify-between text-xs">
+        <div id="adjustDeltaBox" class="p-3 rounded-xl border bg-slate-50 border-slate-200 flex items-center justify-between text-xs">
           <span class="text-slate-600">Ajustement qui sera enregistré :</span>
           <span id="adjustDelta" class="font-bold text-sm text-slate-700">0h00</span>
         </div>
-        <input type="text" id="adjustReason" required
-          placeholder="Motif (ex : report de l'année précédente, correction)"
-          class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-cefor-800">
-        <p class="text-[11px] text-slate-500">Les demandes existantes ne sont pas modifiées : un ajustement daté
-          d'aujourd'hui est ajouté pour atteindre le solde voulu.</p>
+        <input type="text" id="adjustReason" required placeholder="Motif (ex : report de l'année précédente, correction)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-cefor-800">
+        <p class="text-[11px] text-slate-500">Les demandes existantes ne sont pas modifiées : un ajustement daté d'aujourd'hui est ajouté pour atteindre le solde voulu.</p>
         <div class="flex justify-end gap-2">
-          <button type="button"
-            class="close-modal px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Annuler</button>
-          <button type="submit" id="adjustSubmitBtn"
-            class="px-4 py-2 text-sm font-semibold text-white bg-cefor-800 hover:bg-cefor-900 rounded-xl">Appliquer</button>
+          <button type="button" class="close-modal px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Annuler</button>
+          <button type="submit" id="adjustSubmitBtn" class="px-4 py-2 text-sm font-semibold text-white bg-cefor-800 hover:bg-cefor-900 rounded-xl">Appliquer</button>
         </div>
       </form>
       <div class="px-6 pb-6">
@@ -845,10 +836,8 @@
   </div>
 
   <!-- MODAL: CM (certificat médical) -->
-  <div id="cmModal"
-    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div
-      class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] overflow-y-auto">
+  <div id="cmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] overflow-y-auto">
       <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
         <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-notes-medical text-rose-600"></i> Certificat médical (CM)
@@ -863,21 +852,16 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Du</label>
-            <input type="date" id="cmStart" required
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+            <input type="date" id="cmStart" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Au (inclus)</label>
-            <input type="date" id="cmEnd" required
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+            <input type="date" id="cmEnd" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
           </div>
         </div>
-        <input type="text" id="cmReason" placeholder="Remarque (facultatif)"
-          class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
+        <input type="text" id="cmReason" placeholder="Remarque (facultatif)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm">
         <div class="flex justify-end gap-2">
-          <button type="submit"
-            class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl">Enregistrer le
-            CM</button>
+          <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl">Enregistrer le CM</button>
         </div>
       </form>
       <div class="px-6 pb-6">
